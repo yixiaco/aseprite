@@ -1,23 +1,25 @@
 // Aseprite Document Library
-// Copyright (c) 2022-2024 Igara Studio S.A.
-// Copyright (c) 2016-2018 David Capello
+// Copyright (c) 2023-2024 Igara Studio S.A.
 //
 // This file is released under the terms of the MIT license.
 // Read LICENSE.txt for more information.
 
-#ifndef DOC_SELECTED_FRAMES_H_INCLUDED
-#define DOC_SELECTED_FRAMES_H_INCLUDED
+#ifndef DOC_FRAMES_SEQUENCE_H_INCLUDED
+#define DOC_FRAMES_SEQUENCE_H_INCLUDED
 #pragma once
 
-#include "doc/frames_iterators.h"
+#include "doc/selected_frames.h"
 
 namespace doc {
 
-  // The FramesSequence class is based in several code of this class.
+  // This class is based in several code of the SelectedFrames class.
   // TODO: At some point we should remove the duplicated code between these
   // classes.
-  class SelectedFrames {
+  class FramesSequence {
   public:
+    FramesSequence() {}
+    FramesSequence(const SelectedFrames& selectedFrames);
+
     frames::const_iterator begin() const { return frames::const_iterator(m_ranges.begin()); }
     frames::const_iterator end() const { return frames::const_iterator(m_ranges.end()); }
     frames::const_reverse_iterator rbegin() const { return frames::const_reverse_iterator(m_ranges.rbegin()); }
@@ -30,24 +32,26 @@ namespace doc {
     void clear();
     void insert(frame_t frame);
     void insert(frame_t fromFrame, frame_t toFrame);
-    SelectedFrames filter(frame_t fromFrame, frame_t toFrame) const;
+
+    FramesSequence filter(frame_t fromFrame, frame_t toFrame) const;
 
     bool contains(frame_t frame) const;
 
     frame_t firstFrame() const { return (!m_ranges.empty() ? m_ranges.front().fromFrame: -1); }
     frame_t lastFrame() const { return (!m_ranges.empty() ? m_ranges.back().toFrame: -1); }
+    frame_t lowestFrame() const;
 
     void displace(frame_t frameDelta);
-    frames::Reversed<SelectedFrames> reversed() const { return frames::Reversed(*this); }
+    frames::Reversed<FramesSequence> reversed() const { return frames::Reversed(*this); }
 
-    SelectedFrames makeReverse() const;
-    SelectedFrames makePingPong() const;
+    FramesSequence makeReverse() const;
+    FramesSequence makePingPong() const;
 
-    bool operator==(const SelectedFrames& o) const {
+    bool operator==(const FramesSequence& o) const {
       return m_ranges == o.m_ranges;
     }
 
-    bool operator!=(const SelectedFrames& o) const {
+    bool operator!=(const FramesSequence& o) const {
       return !operator==(o);
     }
 
@@ -60,4 +64,4 @@ namespace doc {
 
 } // namespace doc
 
-#endif  // DOC_SELECTED_FRAMES_H_INCLUDED
+#endif  // DOC_FRAMES_SEQUENCE_H_INCLUDED

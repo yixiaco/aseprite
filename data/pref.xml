@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Aseprite -->
-<!-- Copyright (C) 2018-2023  Igara Studio S.A. -->
+<!-- Copyright (C) 2018-2024  Igara Studio S.A. -->
 <!-- Copyright (C) 2014-2018  David Capello -->
 <preferences>
 
@@ -132,6 +132,10 @@
       <value id="BILINEAR" value="1" />
       <value id="BILINEAR_MIPMAP" value="2" />
       <value id="TRILINEAR_MIPMAP" value="3" />
+    </enum>
+    <enum id="AlphaRange">
+      <value id="EIGHT_BIT" value="0" />
+      <value id="PERCENTAGE" value="1" />
     </enum>
   </types>
 
@@ -431,6 +435,10 @@
       <option id="window_profile" type="WindowColorProfile" default="WindowColorProfile::MONITOR" />
       <option id="window_profile_name" type="std::string" />
     </section>
+    <section id="range">
+      <option id="alpha" type="AlphaRange" default="AlphaRange::EIGHT_BIT" />
+      <option id="opacity" type="AlphaRange" default="AlphaRange::PERCENTAGE" />
+    </section>
     <section id="canvas_size">
       <option id="trim_outside" type="bool" default="false" />
     </section>
@@ -546,6 +554,7 @@
       <option id="ani_dir" type="doc::AniDir" default="doc::AniDir::FORWARD" />
       <option id="apply_pixel_ratio" type="bool" default="false" />
       <option id="for_twitter" type="bool" default="false" />
+      <option id="play_subtags" type="bool" default="true" />
     </section>
     <section id="sprite_sheet">
       <option id="defined" type="bool" default="false" />

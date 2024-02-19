@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2018-2023  Igara Studio S.A.
+// Copyright (C) 2018-2024  Igara Studio S.A.
 // Copyright (C) 2001-2018  David Capello
 //
 // This program is distributed under the terms of
@@ -34,6 +34,7 @@
 #include "app/tools/tool.h"
 #include "app/tools/tool_box.h"
 #include "app/tools/tool_loop_modifiers.h"
+#include "app/ui/alpha_entry.h"
 #include "app/ui/brush_popup.h"
 #include "app/ui/button_set.h"
 #include "app/ui/color_button.h"
@@ -710,9 +711,9 @@ private:
   obs::scoped_connection m_conn;
 };
 
-class ContextBar::InkOpacityField : public IntEntry {
+class ContextBar::InkOpacityField : public AlphaEntry {
 public:
-  InkOpacityField() : IntEntry(0, 255) {
+  InkOpacityField() : AlphaEntry(AlphaSlider::Type::OPACITY) {
   }
 
 protected:
@@ -720,7 +721,7 @@ protected:
     if (g_updatingFromCode)
       return;
 
-    IntEntry::onValueChange();
+    AlphaEntry::onValueChange();
     base::ScopedValue lockFlag(g_updatingFromCode, true);
 
     int newValue = getValue();
@@ -1914,6 +1915,8 @@ ContextBar::ContextBar(TooltipManager* tooltipManager,
     [this]{ onFgOrBgColorChange(doc::Brush::ImageColor::MainColor); });
   m_bgColorConn = pref.colorBar.bgColor.AfterChange.connect(
     [this]{ onFgOrBgColorChange(doc::Brush::ImageColor::BackgroundColor); });
+  m_alphaRangeConn = pref.range.opacity.AfterChange.connect(
+    [this]{ onOpacityRangeChange(); });
   m_keysConn = KeyboardShortcuts::instance()->UserChange.connect(
     [this, tooltipManager]{ setupTooltips(tooltipManager); });
   m_dropPixelsConn = m_dropPixels->DropPixels.connect(&ContextBar::onDropPixels, this);
@@ -2056,6 +2059,11 @@ void ContextBar::onFgOrBgColorChange(doc::Brush::ImageColor imageColor)
   }
 }
 
+void ContextBar::onOpacityRangeChange()
+{
+  updateForActiveTool();
+}
+
 void ContextBar::onDropPixels(ContextBarObserver::DropAction action)
 {
   notify_observers(&ContextBarObserver::onDropPixels, action);
@@ -2143,7 +2151,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
     m_contiguous->setSelected(toolPref->contiguous());
 
     m_inkType->setInkTypeIcon(toolPref->ink());
-    m_inkOpacity->setTextf("%d", toolPref->opacity());
+    m_inkOpacity->setValue(toolPref->opacity());
 
     hasInkWithOpacity =
       ((isPaint && tools::inkHasOpacity(toolPref->ink())) ||
@@ -2247,6 +2255,7 @@ void ContextBar::updateForTool(tools::Tool* tool)
   if (supportDynamics)
     m_dynamics->updateIconFromActiveToolPref();
   m_freehandBox->setVisible(isFreehand && (supportOpacity || hasSelectOptions));
+  m_freehandAlgo->setVisible(!hasSprayOptions);
   m_toleranceLabel->setVisible(hasTolerance);
   m_tolerance->setVisible(hasTolerance);
   m_contiguous->setVisible(hasTolerance);

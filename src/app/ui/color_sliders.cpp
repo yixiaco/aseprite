@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2018-2022  Igara Studio S.A.
+// Copyright (C) 2018-2023  Igara Studio S.A.
 // Copyright (C) 2001-2018  David Capello
 //
 // This program is distributed under the terms of
@@ -13,6 +13,8 @@
 #include "app/color_spaces.h"
 #include "app/color_utils.h"
 #include "app/modules/gfx.h"
+#include "app/ui/alpha_entry.h"
+#include "app/ui/alpha_slider.h"
 #include "app/ui/color_sliders.h"
 #include "app/ui/expr_entry.h"
 #include "app/ui/skin/skin_slider_property.h"
@@ -141,19 +143,25 @@ namespace {
 
   private:
     int minValue() const {
-      if (m_absSlider->isVisible())
-        return m_absSlider->getMinValue();
-      else if (m_relSlider->isVisible())
-        return m_relSlider->getMinValue();
+      auto slider = (m_absSlider->isVisible() ? m_absSlider : m_relSlider);
+
+      if (slider->isVisible()) {
+        int min;
+        slider->getSliderThemeInfo(&min, nullptr, nullptr);
+        return min;
+      }
       else
         return 0;
     }
 
     int maxValue() const {
-      if (m_absSlider->isVisible())
-        return m_absSlider->getMaxValue();
-      else if (m_relSlider->isVisible())
-        return m_relSlider->getMaxValue();
+      auto slider = (m_absSlider->isVisible() ? m_absSlider : m_relSlider);
+
+      if (slider->isVisible()) {
+        int max;
+        slider->getSliderThemeInfo(nullptr, &max, nullptr);
+        return max;
+      }
       else
         return 0;
     }
@@ -373,7 +381,9 @@ void ColorSliders::addSlider(const Channel channel,
   ASSERT(!item.label);
   item.label     = new Label(labelText);
   item.box       = new HBox();
-  item.absSlider = new Slider(absMin, absMax, 0);
+  item.absSlider = (channel != Channel::Alpha
+                   ? new Slider(absMin, absMax, 0)
+                   : new AlphaSlider(0, AlphaSlider::Type::ALPHA));
   item.relSlider = new Slider(relMin, relMax, 0);
   item.entry     = new ColorEntry(item.absSlider, item.relSlider);
 
@@ -468,8 +478,7 @@ void ColorSliders::onEntryChange(const Channel i)
   Slider* slider = (m_mode == Mode::Absolute ?
                     m_items[i].absSlider:
                     m_items[i].relSlider);
-  value = std::clamp(value, slider->getMinValue(), slider->getMaxValue());
-  slider->setValue(value);
+  slider->updateValue(value);
 
   onControlChange(i);
 }
@@ -494,7 +503,10 @@ void ColorSliders::updateEntryText(const Channel i)
   Slider* slider = (m_mode == Mode::Absolute ? m_items[i].absSlider:
                                                m_items[i].relSlider);
 
-  m_items[i].entry->setTextf("%d", slider->getValue());
+  int value;
+  slider->getSliderThemeInfo(nullptr, nullptr, &value);
+
+  m_items[i].entry->setTextf("%d", value);
   if (m_items[i].entry->hasFocus())
     m_items[i].entry->selectAllText();
 }
@@ -520,12 +532,12 @@ void ColorSliders::onSetColor(const app::Color& color)
   setAbsSliderValue(Channel::Red,           color.getRed());
   setAbsSliderValue(Channel::Green,         color.getGreen());
   setAbsSliderValue(Channel::Blue,          color.getBlue());
-  setAbsSliderValue(Channel::HsvHue,        int(color.getHsvHue()));
-  setAbsSliderValue(Channel::HsvSaturation, int(color.getHsvSaturation() * 100.0));
-  setAbsSliderValue(Channel::HsvValue,      int(color.getHsvValue() * 100.0));
-  setAbsSliderValue(Channel::HslHue,        int(color.getHslHue()));
-  setAbsSliderValue(Channel::HslSaturation, int(color.getHslSaturation() * 100.0));
-  setAbsSliderValue(Channel::HslLightness,  int(color.getHslLightness() * 100.0));
+  setAbsSliderValue(Channel::HsvHue,        int(color.getHsvHue() + 0.5));
+  setAbsSliderValue(Channel::HsvSaturation, int(color.getHsvSaturation() * 100.0 + 0.5));
+  setAbsSliderValue(Channel::HsvValue,      int(color.getHsvValue() * 100.0 + 0.5));
+  setAbsSliderValue(Channel::HslHue,        int(color.getHslHue() + 0.5));
+  setAbsSliderValue(Channel::HslSaturation, int(color.getHslSaturation() * 100.0 + 0.5));
+  setAbsSliderValue(Channel::HslLightness,  int(color.getHslLightness() * 100.0 + 0.5));
   setAbsSliderValue(Channel::Gray,          color.getGray());
   setAbsSliderValue(Channel::Alpha,         color.getAlpha());
 }
