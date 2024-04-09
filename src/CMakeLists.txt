@@ -95,12 +95,6 @@ set(OBSERVABLE_TESTS OFF CACHE BOOL "Compile observable tests")
 add_subdirectory(observable)
 include_directories(observable)
 
-# Disable clip examples and tests
-set(CLIP_EXAMPLES OFF CACHE BOOL "Compile clip examples")
-set(CLIP_TESTS OFF CACHE BOOL "Compile clip tests")
-set(CLIP_X11_PNG_LIBRARY "${PNG_LIBRARY}")
-add_subdirectory(clip)
-
 # Disable undo tests
 set(UNDO_TESTS OFF CACHE BOOL "Compile undo tests")
 add_subdirectory(undo)
@@ -157,17 +151,22 @@ set(DATA_OUTPUT_DIR ${CMAKE_BINARY_DIR}/bin/data)
 
 include(FetchContent)
 
-FetchContent_Declare(
-  clone_strings
-  GIT_REPOSITORY    https://github.com/aseprite/strings.git
-  GIT_TAG           origin/main
-  SOURCE_DIR        ${DATA_OUTPUT_DIR}/strings.git
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND     ""
-  INSTALL_COMMAND   ""
-  TEST_COMMAND      "")
-FetchContent_MakeAvailable(clone_strings)
-add_custom_target(clone_strings DEPENDS clone_strings)
+find_package(Git)
+if(GIT_FOUND)
+  FetchContent_Declare(
+    clone_strings
+    GIT_REPOSITORY    https://github.com/aseprite/strings.git
+    GIT_TAG           origin/main
+    SOURCE_DIR        ${DATA_OUTPUT_DIR}/strings.git
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND     ""
+    INSTALL_COMMAND   ""
+    TEST_COMMAND      "")
+  FetchContent_MakeAvailable(clone_strings)
+  add_custom_target(clone_strings DEPENDS clone_strings)
+else()
+  add_custom_target(clone_strings)
+endif()
 
 ######################################################################
 # Copy data/ directory target into bin/data/
@@ -182,14 +181,16 @@ foreach(fn ${src_data_files})
   list(APPEND out_data_files ${DATA_OUTPUT_DIR}/${fn})
 endforeach()
 
-# Copy original en.ini to strings.git/en.ini to keep it updated. We
-# have to manually sync the "en.ini" file in the "strings" repo from
-# the "aseprite" repo.
-add_custom_command(
-  OUTPUT ${DATA_OUTPUT_DIR}/strings.git/en.ini
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SOURCE_DATA_DIR}/strings/en.ini ${DATA_OUTPUT_DIR}/strings.git/en.ini
-  MAIN_DEPENDENCY ${SOURCE_DATA_DIR}/strings/en.ini)
-list(APPEND out_data_files ${DATA_OUTPUT_DIR}/strings.git/en.ini)
+if(GIT_FOUND)
+  # Copy original en.ini to strings.git/en.ini to keep it updated. We
+  # have to manually sync the "en.ini" file in the "strings" repo from
+  # the "aseprite" repo.
+  add_custom_command(
+    OUTPUT ${DATA_OUTPUT_DIR}/strings.git/en.ini
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SOURCE_DATA_DIR}/strings/en.ini ${DATA_OUTPUT_DIR}/strings.git/en.ini
+    MAIN_DEPENDENCY ${SOURCE_DATA_DIR}/strings/en.ini)
+  list(APPEND out_data_files ${DATA_OUTPUT_DIR}/strings.git/en.ini)
+endif()
 
 add_custom_command(
   OUTPUT ${DATA_OUTPUT_DIR}/README.md
