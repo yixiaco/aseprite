@@ -16,7 +16,7 @@ jobs:
             build_type: Release
             enable_ui: on
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
       with:
         submodules: 'recursive'
     - name: Install Dependencies
