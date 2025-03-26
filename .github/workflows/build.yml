@@ -15,7 +15,7 @@ jobs:
             enable_ui: on
     steps:
       # 检出代码仓库，包含子模块
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
@@ -60,7 +60,7 @@ jobs:
           cd build && ninja
 
       # 上传构建产物
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: aseprite
           path: |
