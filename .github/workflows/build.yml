@@ -7,16 +7,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        build_type: [RelWithDebInfo, Debug]
+        build_type: [Release]
+        enable_ui: [on]
         ui: [gui, cli]
         scripting: [lua, noscripts]
-        exclude:
-          - build_type: Debug
-            ui: gui
-          - build_type: RelWithDebInfo
-            ui: cli
-          - build_type: RelWithDebInfo
-            scripting: noscripts
+        include:
+          - os: windows-latest
+            build_type: Release
+            enable_ui: on
     steps:
     - uses: actions/checkout@v4
       with:
@@ -109,3 +107,10 @@ jobs:
         export ASEPRITE=$PWD/build/bin/aseprite
         cd tests
         $XVFB bash run-tests.sh
+    - name: Upload Executable Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.ui }}-${{ matrix.scripting }}-executable
+        path: |
+          build/bin/aseprite
+          build/bin/aseprite.exe  # 确保 Windows 下的 .exe 文件也被包含
